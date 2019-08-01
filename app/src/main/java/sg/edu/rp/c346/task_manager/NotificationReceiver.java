@@ -15,39 +15,42 @@ import android.support.v4.app.NotificationCompat;
 
 public class NotificationReceiver extends BroadcastReceiver {
 
-    int reqCode = 12345;
+    int id = 12345;
+
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String data = intent.getStringExtra("Data");
 
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            NotificationChannel channel = new NotificationChannel("default", "Default Channel", NotificationManager.IMPORTANCE_HIGH);
+        Intent i = new Intent(context, MainActivity.class);
+        PendingIntent pi = PendingIntent.getActivity(context, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Action a = new NotificationCompat.Action.Builder(R.mipmap.ic_launcher, data, pi).build();
+
+        NotificationCompat.WearableExtender e = new NotificationCompat.WearableExtender();
+        e.addAction(a);
+
+        NotificationCompat.Builder b = new NotificationCompat.Builder(context, "default");
+        b.setContentTitle("Task Manager Reminder");
+        b.setContentText(data);
+        b.setSmallIcon(R.mipmap.ic_launcher);
+
+        b.extend(e);
+
+        Notification notif = b.build();
+
+        nm.notify(id, notif);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new
+                    NotificationChannel("default", "Default Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT);
 
             channel.setDescription("This is for default notification");
-            notificationManager.createNotificationChannel(channel);
+            nm.createNotificationChannel(channel);
+
         }
-        Intent i = new Intent(context, MainActivity.class);
-
-        PendingIntent pIntent = PendingIntent.getBroadcast(context, reqCode, i, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "default");
-        builder.setContentTitle("Task Manager Reminder");
-        builder.setContentText(data);
-        builder.setSmallIcon(android.R.drawable.ic_dialog_info);
-        builder.setContentIntent(pIntent);
-        long[] v = {0,500,1000};
-        builder.setVibrate(v);
-        builder.setAutoCancel(true);
-
-        Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        builder.setSound(uri);
-        builder.setLights(Color.BLUE, 2000, 1000);
-        builder.setPriority(Notification.PRIORITY_HIGH);
-
-        Notification n = builder.build();
-        notificationManager.notify(reqCode, n);
     }
 }
